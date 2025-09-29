@@ -4,10 +4,14 @@ services:
       context: .
       dockerfile: ./docker/php/Dockerfile
     container_name: cf-saas-backend-php
-    working_dir: /workspace
+    working_dir: /app
     volumes:
-      - .:/workspace
-      - ./docker/php/config-dev/php.ini:/usr/local/etc/php/php.ini
+      - .:/app
+      - vendor_data:/app/code/vendor
+      - framework_cache:/app/code/storage/framework
+      - logs_data:/app/code/storage/logs
+      - bootstrap_cache:/app/code/bootstrap/cache
+      - ./docker/php/php.ini:/usr/local/etc/php/php.ini
     environment:
       - DB_HOST=postgres
       - DB_NAME=${DB_NAME:-commandaflow_saas}
@@ -24,7 +28,7 @@ services:
     ports:
       - "80:80"
     volumes:
-      - .:/workspace
+      - .:/app
       - ./docker/nginx/conf.d:/etc/nginx/conf.d
     depends_on:
       - php
@@ -72,6 +76,10 @@ services:
 
 volumes:
   postgres_data:
+  vendor_data:
+  framework_cache:
+  logs_data:
+  bootstrap_cache:
 
 networks:
   backend:
