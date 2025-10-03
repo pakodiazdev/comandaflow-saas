@@ -26,7 +26,7 @@ services:
     image: nginx:latest
     container_name: cf-saas-backend-web
     ports:
-      - "80:80"
+      - "8081:80"
     volumes:
       - .:/app
       - ./docker/nginx/conf.d:/etc/nginx/conf.d
@@ -46,7 +46,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5433:5432"
     networks:
       - backend
 
@@ -58,7 +58,7 @@ services:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@admin.com}
       - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASS:-secret}
     ports:
-      - "8080:80"
+      - "8082:80"
     depends_on:
       - postgres
     networks:

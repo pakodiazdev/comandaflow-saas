@@ -9,11 +9,16 @@
         {
             "type": "path",
             "url": "./packages/comandaflow-ce/code/api/packages/hello-world"
+        },
+        {
+            "type": "path",
+            "url": "./packages/comandaflow-ce/code/api/packages/time-tracker"
         }
     ],
     "require": {
         "php": "^8.2",
         "cf-ce/hello-world": "dev-main",
+        "cf-ce/time-tracker": "dev-main",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1"
     },
