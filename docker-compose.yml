@@ -18,18 +18,24 @@ services:
       - DB_USER=${DB_USER:-postgres}
       - DB_PASS=${DB_PASS:-secret}
       - MAIL_HOST=mailhog
-      - MAIL_PORT=1025
+      - MAIL_PORT=${MAILHOG_SMTP_PORT:-1025}
+      - APP_ENV=${APP_ENV:-local}
+      - APP_DEBUG=${APP_DEBUG:-true}
     networks:
       - backend
 
   web:
-    image: nginx:latest
+    build:
+      context: .
+      dockerfile: ./docker/nginx/Dockerfile
     container_name: cf-saas-backend-web
     ports:
-      - "8081:80"
+      - "${WEB_PORT:-8081}:80"
+      - "${WEB_HTTPS_PORT:-8443}:443"
     volumes:
       - .:/app
       - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      - ./docker/cert:/etc/nginx/certs
     depends_on:
       - php
     networks:
@@ -46,7 +52,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5433:5432"
+      - "${POSTGRES_PORT:-5433}:5432"
     networks:
       - backend
 
@@ -58,7 +64,7 @@ services:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@admin.com}
       - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASS:-secret}
     ports:
-      - "8082:80"
+      - "${PGADMIN_PORT:-8082}:80"
     depends_on:
       - postgres
     networks:
@@ -69,8 +75,8 @@ services:
     container_name: cf-saas-backend-mailhog
     restart: unless-stopped
     ports:
-      - "1025:1025"  # SMTP
-      - "8025:8025"  # Web UI
+      - "${MAILHOG_SMTP_PORT:-1025}:1025"  # SMTP
+      - "${MAILHOG_WEB_PORT:-8025}:8025"  # Web UI
     networks:
       - backend
 
