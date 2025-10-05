@@ -1,0 +1,812 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "ComandaFlow Central API Documentation",
+        "description": "Central domain API for managing tenants and system-wide operations",
+        "contact": {
+            "name": "ComandaFlow Support",
+            "email": "support@comandaflow.com"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "/",
+            "description": "Central API - Automatically uses current URL"
+        },
+        {
+            "url": "/swagger/central"
+        }
+    ],
+    "paths": {
+        "/api/v1/central/tenants": {
+            "get": {
+                "tags": [
+                    "Central"
+                ],
+                "summary": "Get all tenants",
+                "description": "Returns a list of all tenants in the system",
+                "operationId": "getAllTenants",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "string",
+                                                "example": "sushigo"
+                                            },
+                                            "data": {
+                                                "type": "object"
+                                            },
+                                            "created_at": {
+                                                "type": "string",
+                                                "format": "date-time"
+                                            },
+                                            "updated_at": {
+                                                "type": "string",
+                                                "format": "date-time"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Tenant Management"
+                ],
+                "summary": "Create a new tenant",
+                "description": "Creates a new tenant with its database, runs migrations, and assigns domains",
+                "operationId": "createTenant",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "id",
+                                    "domains"
+                                ],
+                                "properties": {
+                                    "id": {
+                                        "description": "Unique tenant identifier (alphanumeric, dashes, underscores)",
+                                        "type": "string",
+                                        "example": "acme-corp"
+                                    },
+                                    "domains": {
+                                        "description": "List of domains to assign to the tenant",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "acme.comandaflow.local",
+                                            "acme.local"
+                                        ]
+                                    },
+                                    "data": {
+                                        "description": "Additional tenant data (name, plan, settings, etc.)",
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "example": "ACME Corporation"
+                                            },
+                                            "plan": {
+                                                "type": "string",
+                                                "example": "premium"
+                                            },
+                                            "settings": {
+                                                "properties": {
+                                                    "timezone": {
+                                                        "type": "string",
+                                                        "example": "America/Mexico_City"
+                                                    },
+                                                    "currency": {
+                                                        "type": "string",
+                                                        "example": "MXN"
+                                                    },
+                                                    "language": {
+                                                        "type": "string",
+                                                        "example": "es"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tenant created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tenant created successfully"
+                                        },
+                                        "tenant": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "example": "acme-corp"
+                                                },
+                                                "data": {
+                                                    "type": "object"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "domains": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "domain": {
+                                                                "type": "string"
+                                                            },
+                                                            "tenant_id": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "database": {
+                                            "type": "string",
+                                            "example": "tenantacme-corp"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The id has already been taken."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Error creating tenant"
+                                        },
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/central/stats": {
+            "get": {
+                "tags": [
+                    "Central"
+                ],
+                "summary": "Get central system statistics",
+                "description": "Returns statistics about the central system",
+                "operationId": "getCentralStats",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_tenants": {
+                                            "type": "integer",
+                                            "example": 3
+                                        },
+                                        "active_tenants": {
+                                            "type": "integer",
+                                            "example": 3
+                                        },
+                                        "system_status": {
+                                            "type": "string",
+                                            "example": "operational"
+                                        },
+                                        "timestamp": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/central/health": {
+            "get": {
+                "tags": [
+                    "Central"
+                ],
+                "summary": "Get central system health",
+                "description": "Returns health status of the central system",
+                "operationId": "getCentralHealth",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "healthy"
+                                        },
+                                        "database_connected": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "is_central": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "timestamp": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/central/tenants/{id}": {
+            "get": {
+                "tags": [
+                    "Tenant Management"
+                ],
+                "summary": "Get tenant details",
+                "description": "Returns detailed information about a specific tenant",
+                "operationId": "getTenant",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Tenant ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "acme-corp"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "string",
+                                            "example": "acme-corp"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "created_at": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        },
+                                        "updated_at": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        },
+                                        "domains": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "domain": {
+                                                        "type": "string"
+                                                    },
+                                                    "tenant_id": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "database": {
+                                            "type": "string",
+                                            "example": "tenantacme-corp"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tenant not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Tenant Management"
+                ],
+                "summary": "Update tenant information",
+                "description": "Updates tenant data (name, plan, settings, etc.). Does not update domains.",
+                "operationId": "updateTenant",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Tenant ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "acme-corp"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "data": {
+                                        "description": "Tenant data to update",
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "example": "ACME Corporation Updated"
+                                            },
+                                            "plan": {
+                                                "type": "string",
+                                                "example": "enterprise"
+                                            },
+                                            "settings": {
+                                                "properties": {
+                                                    "timezone": {
+                                                        "type": "string",
+                                                        "example": "America/New_York"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Tenant updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tenant updated successfully"
+                                        },
+                                        "tenant": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Tenant Management"
+                ],
+                "summary": "Delete a tenant",
+                "description": "Deletes a tenant, its domains, and its database. THIS ACTION IS IRREVERSIBLE!",
+                "operationId": "deleteTenant",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Tenant ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "acme-corp"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tenant deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tenant deleted successfully"
+                                        },
+                                        "tenant_id": {
+                                            "type": "string",
+                                            "example": "acme-corp"
+                                        },
+                                        "deleted_at": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant not found"
+                    },
+                    "500": {
+                        "description": "Error deleting tenant"
+                    }
+                }
+            }
+        },
+        "/api/v1/central/tenants/{id}/domains": {
+            "post": {
+                "tags": [
+                    "Tenant Management"
+                ],
+                "summary": "Add domain to tenant",
+                "description": "Adds a new domain to an existing tenant",
+                "operationId": "addTenantDomain",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Tenant ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "acme-corp"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "domain"
+                                ],
+                                "properties": {
+                                    "domain": {
+                                        "type": "string",
+                                        "example": "newdomain.comandaflow.local"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Domain added successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Domain added successfully"
+                                        },
+                                        "domain": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant not found"
+                    },
+                    "422": {
+                        "description": "Validation error (domain already exists)"
+                    }
+                }
+            }
+        },
+        "/api/v1/central/tenants/{id}/domains/{domainId}": {
+            "delete": {
+                "tags": [
+                    "Tenant Management"
+                ],
+                "summary": "Remove domain from tenant",
+                "description": "Removes a domain from a tenant. Tenant must have at least one domain.",
+                "operationId": "removeTenantDomain",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Tenant ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "acme-corp"
+                        }
+                    },
+                    {
+                        "name": "domainId",
+                        "in": "path",
+                        "description": "Domain ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Domain removed successfully"
+                    },
+                    "404": {
+                        "description": "Tenant or domain not found"
+                    },
+                    "422": {
+                        "description": "Cannot remove last domain"
+                    }
+                }
+            }
+        },
+        "/api/v1/health": {
+            "get": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Health check",
+                "description": "Returns the status of the application and its dependencies",
+                "operationId": "bb465f65d8a57f9c3fc7689e4c6ebd8e",
+                "responses": {
+                    "200": {
+                        "description": "System is healthy",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "healthy"
+                                        },
+                                        "timestamp": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2023-10-04T02:12:00.000000Z"
+                                        },
+                                        "environment": {
+                                            "type": "string",
+                                            "example": "local"
+                                        },
+                                        "version": {
+                                            "type": "string",
+                                            "example": "1.0.0"
+                                        },
+                                        "tenant": {
+                                            "properties": {
+                                                "context": {
+                                                    "type": "string",
+                                                    "example": "tenant"
+                                                },
+                                                "id": {
+                                                    "type": "string",
+                                                    "example": "sushigo"
+                                                },
+                                                "domain": {
+                                                    "type": "string",
+                                                    "example": "sushigo.comandaflow.local"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "checks": {
+                                            "properties": {
+                                                "database": {
+                                                    "properties": {
+                                                        "status": {
+                                                            "type": "string",
+                                                            "example": "healthy"
+                                                        },
+                                                        "message": {
+                                                            "type": "string",
+                                                            "example": "Database connection successful"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "cache": {
+                                                    "properties": {
+                                                        "status": {
+                                                            "type": "string",
+                                                            "example": "healthy"
+                                                        },
+                                                        "message": {
+                                                            "type": "string",
+                                                            "example": "Cache system working"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "uptime": {
+                                            "properties": {
+                                                "started_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "uptime_seconds": {
+                                                    "type": "integer",
+                                                    "example": 3600
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "System is unhealthy",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "unhealthy"
+                                        },
+                                        "timestamp": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        },
+                                        "environment": {
+                                            "type": "string",
+                                            "example": "local"
+                                        },
+                                        "version": {
+                                            "type": "string",
+                                            "example": "1.0.0"
+                                        },
+                                        "checks": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "description": "Enter your Bearer token in the format: Bearer {token}",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "System",
+            "description": "System health and monitoring operations"
+        },
+        {
+            "name": "Central",
+            "description": "Central domain operations"
+        },
+        {
+            "name": "Tenant Management",
+            "description": "API endpoints for managing tenants in the central domain"
+        }
+    ]
+}
