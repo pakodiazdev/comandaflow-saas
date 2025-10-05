@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: ./docker/php/Dockerfile
-    container_name: cf-saas-backend-php
+    container_name: ${PROJECT_PREFIX:-cfsaas}-php
     working_dir: /app
     volumes:
       - .:/app
@@ -23,13 +23,18 @@ services:
       - backend
 
   web:
-    image: nginx:latest
-    container_name: cf-saas-backend-web
+    build:
+      context: .
+      dockerfile: ./docker/nginx/Dockerfile
+    container_name: ${PROJECT_PREFIX:-cfsaas}-web
     ports:
-      - "8081:80"
+      - "${WEB_PORT:-8081}:80"
+      - "${WEB_HTTPS_PORT:-8443}:443"
     volumes:
       - .:/app
       - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      - ./docker/cert:/app/docker/cert  # Solo para persistir el rootCA.crt
+      - nginx_certs:/cert  # Certificados generados (temporales, se regeneran en cada inicio)
     depends_on:
       - php
     networks:
@@ -37,7 +42,7 @@ services:
 
   postgres:
     image: postgres:15-alpine
-    container_name: cf-saas-backend-postgres
+    container_name: ${PROJECT_PREFIX:-cfsaas}-postgres
     restart: unless-stopped
     environment:
       - POSTGRES_DB=${DB_NAME:-commandaflow_saas}
@@ -46,19 +51,19 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5433:5432"
+      - "${POSTGRES_PORT:-5433}:5432"
     networks:
       - backend
 
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: cf-saas-backend-pgadmin
+    container_name: ${PROJECT_PREFIX:-cfsaas}-pgadmin
     restart: unless-stopped
     environment:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@admin.com}
       - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASS:-secret}
     ports:
-      - "8082:80"
+      - "${PGADMIN_PORT:-8082}:80"
     depends_on:
       - postgres
     networks:
@@ -66,11 +71,11 @@ services:
 
   mailhog:
     image: mailhog/mailhog:latest
-    container_name: cf-saas-backend-mailhog
+    container_name: ${PROJECT_PREFIX:-cfsaas}-mailhog
     restart: unless-stopped
     ports:
-      - "1025:1025"  # SMTP
-      - "8025:8025"  # Web UI
+      - "${MAILHOG_SMTP_PORT:-1025}:1025"  # SMTP
+      - "${MAILHOG_WEB_PORT:-8025}:8025"  # Web UI
     networks:
       - backend
 
@@ -80,6 +85,7 @@ volumes:
   framework_cache:
   logs_data:
   bootstrap_cache:
+  nginx_certs:
 
 networks:
   backend:

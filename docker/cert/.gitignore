@@ -1,0 +1,9 @@
+# Ignore all certificate files
+*.crt
+*.pem
+*.key
+
+# Except these
+!.gitignore
+!README.md
+!CHANGELOG.md

@@ -19,8 +19,10 @@
         "php": "^8.2",
         "cf-ce/hello-world": "dev-main",
         "cf-ce/time-tracker": "dev-main",
+        "darkaonline/l5-swagger": "^9.0",
         "laravel/framework": "^12.0",
-        "laravel/tinker": "^2.10.1"
+        "laravel/tinker": "^2.10.1",
+        "stancl/tenancy": "^3.9"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
