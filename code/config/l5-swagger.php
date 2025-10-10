@@ -68,7 +68,7 @@ return [
                 /*
                  * Absolute path to directory where to export views
                  */
-                'base' => '/swagger/central',
+                'docs' => storage_path('api-docs'),
 
                 /*
                  * File name of the generated json documentation file
@@ -91,6 +91,7 @@ return [
                 'annotations' => [
                     base_path('app/Http/Controllers/Api/Central'),
                     base_path('app/Http/Controllers/Api/Shared'),
+                    base_path('packages/comandaflow-ce/code/api/packages/cf-auth/src/Http/Controllers/AuthController.php'),
                 ],
             ],
             
@@ -201,7 +202,7 @@ return [
                 /*
                  * Absolute path to directory where to export views
                  */
-                'base' => '/swagger/tenant',
+                'docs' => storage_path('api-docs'),
 
                 /*
                  * File name of the generated json documentation file
@@ -224,6 +225,7 @@ return [
                 'annotations' => [
                     base_path('app/Http/Controllers/Api/Tenant'),
                     base_path('app/Http/Controllers/Api/Shared'),
+                    base_path('packages/comandaflow-ce/code/api/packages/cf-auth/src/Http/Controllers/AuthController.php'),
                 ],
             ],
             
@@ -238,8 +240,17 @@ return [
             ],
             
             'securityDefinitions' => [
-                'securitySchemes' => [],
-                'security' => [],
+                'securitySchemes' => [
+                    'bearerAuth' => [
+                        'type' => 'http',
+                        'scheme' => 'bearer',
+                        'bearerFormat' => 'JWT',
+                        'description' => 'Enter your Bearer token obtained from /api/v1/auth/login',
+                    ],
+                ],
+                'security' => [
+                    ['bearerAuth' => []],
+                ],
             ],
             
             'generate_always' => env('L5_SWAGGER_GENERATE_ALWAYS', false),

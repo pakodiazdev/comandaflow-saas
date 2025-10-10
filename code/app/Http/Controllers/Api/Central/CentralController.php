@@ -9,7 +9,7 @@ use App\Models\Tenant;
 /**
  * @OA\Tag(
  *     name="Central",
- *     description="Central domain operations"
+ *     description="Central domain operations for tenant management"
  * )
  */
 class CentralController extends Controller

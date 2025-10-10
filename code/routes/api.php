@@ -8,16 +8,21 @@ use Illuminate\Support\Facades\Route;
 | API Routes
 |--------------------------------------------------------------------------
 |
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
+| These routes are loaded for ALL API requests (both central and tenant).
+| 
+| NEW APPROACH:
+| - EnsureTenancyForApi middleware (registered globally) handles DB switching
+| - It detects if the request is from a tenant domain
+| - If tenant domain: switches to tenant DB connection
+| - If central domain: keeps central DB connection
+| 
+| This means we can have ONE set of routes that work for both contexts!
+| No more duplicate route registration issues.
 |
 */
 
-// Always include shared routes (available in both central and tenant contexts)
+// Load shared routes for ALL domains (tenant/central context determined by middleware)
 require __DIR__.'/api-shared.php';
 
-// Always include central routes (will be available in central context)
+// Load central-specific routes (admin panel, tenant management, etc.)
 require __DIR__.'/api-central.php';
-
-// Tenant routes are loaded separately via routes/tenant.php and Stancl Tenancy

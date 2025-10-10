@@ -25,12 +25,15 @@ As an administrator of ComandaFlow, I need to install the time‑tracker module 
 ### 📊 Estimates
 - **Optimistic:** `5h`
 - **Pessimistic:** `10h`
-- **Tracked:** `1h 5m`
+- **Tracked:** `1h 7m`
 
 ### 📅 Sessions
 ```json
 [
     {"date": "2025-10-03", "start": "11:13", "end": "11:59"},
-    {"date": "2025-10-03", "start": "00:21", "end": "00:40"}
+    {"date": "2025-10-03", "start": "00:21", "end": "00:40"},
+    {"date": "2025-10-10", "start": "07:34", "end": "07:36"},
+    {"date": "2025-10-10", "start": "07:57", "end": "07:57"},
+    {"date": "2025-10-10", "start": "08:18", "end": "HH:MM"}
 ]
 ```

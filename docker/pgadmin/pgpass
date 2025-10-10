@@ -1,0 +1,4 @@
+# PostgreSQL password file
+# Format: hostname:port:database:username:password
+# This file is automatically configured with environment variables
+postgres:5432:*:postgres:${DB_PASS:-secret}

@@ -121,6 +121,7 @@ class TenancyServiceProvider extends ServiceProvider
     protected function mapRoutes()
     {
         if (file_exists(base_path('routes/tenant.php'))) {
+            // Web routes for tenants
             Route::middleware([
                 'web',
                 Middleware\InitializeTenancyByDomain::class,
@@ -129,6 +130,14 @@ class TenancyServiceProvider extends ServiceProvider
                 ->namespace(static::$controllerNamespace)
                 ->group(base_path('routes/tenant.php'));
         }
+        
+        // NOTE: API routes are NO LONGER registered here!
+        // 
+        // New approach (as of 2025):
+        // - api-shared.php is loaded from routes/api.php (only once)
+        // - EnsureTenancyForApi middleware (global) handles DB switching based on domain
+        // - This eliminates duplicate route registration issues
+        // - Single route definition works for both tenant and central contexts
     }
 
     protected function makeTenancyMiddlewareHighestPriority()

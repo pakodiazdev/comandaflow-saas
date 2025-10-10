@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Stancl\Tenancy\Database\Models\Tenant;
+use App\Models\Tenant;
 use Stancl\Tenancy\Database\Models\Domain;
 
 class CreateTenants extends Command

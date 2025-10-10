@@ -40,6 +40,18 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // Central API Guard (OAuth2 with Passport)
+        'central' => [
+            'driver' => 'passport',
+            'provider' => 'central_users',
+        ],
+
+        // Tenant API Guard (OAuth2 with Passport)
+        'tenant' => [
+            'driver' => 'passport',
+            'provider' => 'tenant_users',
+        ],
     ],
 
     /*
@@ -63,6 +75,18 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\User::class),
+        ],
+
+        // Central Users Provider
+        'central_users' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Central\User::class,
+        ],
+
+        // Tenant Users Provider
+        'tenant_users' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Tenant\User::class,
         ],
 
         // 'users' => [
@@ -94,6 +118,20 @@ return [
         'users' => [
             'provider' => 'users',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+
+        'central_users' => [
+            'provider' => 'central_users',
+            'table' => 'password_reset_tokens',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+
+        'tenant_users' => [
+            'provider' => 'tenant_users',
+            'table' => 'password_reset_tokens',
             'expire' => 60,
             'throttle' => 60,
         ],

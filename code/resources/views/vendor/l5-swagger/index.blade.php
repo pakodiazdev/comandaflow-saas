@@ -23,6 +23,28 @@
     body {
       margin:0;
       background: #fafafa;
+      padding-top: 120px; /* Space for fixed header and login bar */
+    }
+    
+    /* Fixed Header Styles */
+    .swagger-ui .topbar {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 1000 !important;
+    }
+    
+    /* Fixed Quick Login Bar */
+    #quick-login-container {
+        position: fixed !important;
+        top: 60px !important; /* Below the header */
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 999 !important;
+        background: #f8f9fa !important;
+        border-bottom: 2px solid #e9ecef !important;
+        padding: 15px !important;
     }
     </style>
     @if(config('l5-swagger.defaults.ui.display.dark_mode'))
@@ -117,7 +139,41 @@
 </head>
 
 <body @if(config('l5-swagger.defaults.ui.display.dark_mode')) id="dark-mode" @endif>
+
 <div id="swagger-ui"></div>
+
+<!-- Quick Login Form - Fixed position below header -->
+<div id="quick-login-container">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-weight: bold; color: #495057;">🔐 Quick Login:</span>
+            <input type="email" id="quick-email" placeholder="Email" 
+                   style="padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; width: 200px;">
+            <input type="password" id="quick-password" placeholder="Password"
+                   style="padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; width: 150px;">
+            <button id="quick-login-btn" onclick="doQuickLogin()"
+                    style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                Login
+            </button>
+        </div>
+        <div id="login-status" style="color: #666; font-size: 14px;">
+            Enter credentials to authenticate automatically
+        </div>
+    </div>
+</div>
+
+<!-- Logout Button - Floating in top right -->
+<div id="logout-container" style="display: none; position: fixed; top: 70px; right: 20px; z-index: 998;">
+    <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span id="logged-user-info" style="font-size: 12px; color: #495057; font-weight: bold;"></span>
+            <button id="logout-btn" onclick="doLogout()"
+                    style="padding: 6px 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">
+                Logout
+            </button>
+        </div>
+    </div>
+</div>
 
 <script src="{{ asset('swagger-ui/swagger-ui-bundle.js') }}"></script>
 <script src="{{ asset('swagger-ui/swagger-ui-standalone-preset.js') }}"></script>
@@ -173,9 +229,8 @@
         // Hide server selector for both Central and Tenant
         setTimeout(function() {
             const serverSelector = document.querySelector('.servers select');
-            const serversSection = document.querySelector('.servers');
-            if (serverSelector && serversSection) {
-                serversSection.style.display = 'none';
+            if (serverSelector) {
+                serverSelector.style.display = 'none';
             }
         }, 500);
 
@@ -185,6 +240,248 @@
         })
         @endif
     }
+
+    // Quick Login Function
+    async function doQuickLogin() {
+        const email = document.getElementById('quick-email').value;
+        const password = document.getElementById('quick-password').value;
+        const loginBtn = document.getElementById('quick-login-btn');
+        const statusDiv = document.getElementById('login-status');
+
+        if (!email || !password) {
+            updateStatus('Please enter both email and password', 'error');
+            return;
+        }
+
+        // Show loading state
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Logging in...';
+        loginBtn.style.background = '#6c757d';
+        updateStatus('Authenticating...', 'loading');
+
+        try {
+            const response = await fetch('/api/v1/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Login failed');
+            }
+
+            const token = data.data?.access_token;
+            const user = data.data?.user;
+            
+            if (!token) {
+                throw new Error('No access token received');
+            }
+
+            // Store user info for logout display
+            localStorage.setItem('currentUser', JSON.stringify(user));
+            localStorage.setItem('accessToken', token);
+
+            // Authorize Swagger UI
+            window.ui.authActions.authorize({
+                bearerAuth: {
+                    name: 'bearerAuth',
+                    schema: {
+                        type: 'http',
+                        scheme: 'bearer'
+                    },
+                    value: token
+                }
+            });
+
+            updateStatus('✅ Login successful! You are now authenticated.', 'success');
+            
+            // Clear form
+            document.getElementById('quick-email').value = '';
+            document.getElementById('quick-password').value = '';
+
+            // Hide login form and show logout button
+            toggleAuthUI(true);
+
+        } catch (error) {
+            updateStatus('❌ ' + error.message, 'error');
+        } finally {
+            // Reset button
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Login';
+            loginBtn.style.background = '#28a745';
+        }
+    }
+
+    // Logout Function
+    async function doLogout() {
+        try {
+            const token = localStorage.getItem('accessToken');
+            
+            if (token) {
+                // Call logout endpoint
+                await fetch('/api/v1/auth/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+            }
+        } catch (error) {
+            console.warn('Logout request failed:', error.message);
+        } finally {
+            // Clear local storage
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('accessToken');
+            
+                        // Clear Swagger UI authorization properly
+            if (window.ui && window.ui.authActions) {
+                // Method 1: Use logout action
+                window.ui.authActions.logout();
+                
+                // Method 2: Clear authorization manually
+                window.ui.authActions.authorize({
+                    bearerAuth: {
+                        name: 'bearerAuth',
+                        schema: {
+                            type: 'http',
+                            scheme: 'bearer'
+                        },
+                        value: ''
+                    }
+                });
+                
+                // Method 3: Force clear using backup method
+                setTimeout(() => {
+                    forceLogoutSwagger();
+                }, 100);
+            }
+            
+            // Show login form and hide logout button
+            toggleAuthUI(false);
+        }
+    }
+
+    // Toggle between login form and logout button
+    function toggleAuthUI(isLoggedIn) {
+        const loginContainer = document.getElementById('quick-login-container');
+        const logoutContainer = document.getElementById('logout-container');
+        const userInfo = document.getElementById('logged-user-info');
+        
+        if (isLoggedIn) {
+            const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            loginContainer.style.display = 'none';
+            logoutContainer.style.display = 'block';
+            userInfo.textContent = `👤 ${user.name || user.email || 'User'}`;
+        } else {
+            loginContainer.style.display = 'block';
+            logoutContainer.style.display = 'none';
+            updateStatus('Logged out successfully. Enter credentials to authenticate again.', 'success');
+            
+            // Clear form fields
+            document.getElementById('quick-email').value = '';
+            document.getElementById('quick-password').value = '';
+        }
+    }
+
+    // Force clear Swagger UI authorization (backup method)
+    function forceLogoutSwagger() {
+        try {
+            // Try multiple methods to ensure logout
+            if (window.ui && window.ui.getSystem) {
+                const system = window.ui.getSystem();
+                
+                // Clear authorization state
+                if (system.authSelectors) {
+                    const auths = system.authSelectors.authorized();
+                    if (auths && auths.size > 0) {
+                        auths.entrySeq().forEach(([key, value]) => {
+                            window.ui.authActions.logout([key]);
+                        });
+                    }
+                }
+                
+                // Force clear auth state
+                if (system.authActions && system.authActions.logout) {
+                    system.authActions.logout();
+                }
+            }
+            
+            // Visual verification - check if authorize button shows "Authorize" or "Logout"
+            setTimeout(() => {
+                const authorizeBtn = document.querySelector('.btn.authorize');
+                if (authorizeBtn && authorizeBtn.textContent.includes('Logout')) {
+                    console.log('Swagger still shows as authorized, attempting force clear...');
+                    authorizeBtn.click();
+                }
+            }, 200);
+            
+        } catch (error) {
+            console.warn('Force logout failed:', error.message);
+        }
+    }
+
+    // Check authentication status on page load
+    function checkAuthStatus() {
+        const token = localStorage.getItem('accessToken');
+        const user = localStorage.getItem('currentUser');
+        
+        if (token && user) {
+            // Auto-authorize Swagger UI if token exists
+            window.ui.authActions.authorize({
+                bearerAuth: {
+                    name: 'bearerAuth',
+                    schema: {
+                        type: 'http',
+                        scheme: 'bearer'
+                    },
+                    value: token
+                }
+            });
+            
+            toggleAuthUI(true);
+        } else {
+            toggleAuthUI(false);
+        }
+    }
+
+    function updateStatus(message, type) {
+        const statusDiv = document.getElementById('login-status');
+        statusDiv.textContent = message;
+        
+        if (type === 'error') {
+            statusDiv.style.color = '#dc3545';
+        } else if (type === 'success') {
+            statusDiv.style.color = '#28a745';
+        } else if (type === 'loading') {
+            statusDiv.style.color = '#007bff';
+        } else {
+            statusDiv.style.color = '#666';
+        }
+    }
+
+    // Handle Enter key in login form
+    document.addEventListener('DOMContentLoaded', function() {
+        const emailInput = document.getElementById('quick-email');
+        const passwordInput = document.getElementById('quick-password');
+        
+        function handleEnter(event) {
+            if (event.key === 'Enter') {
+                doQuickLogin();
+            }
+        }
+        
+        emailInput.addEventListener('keypress', handleEnter);
+        passwordInput.addEventListener('keypress', handleEnter);
+
+        // Check authentication status when page loads
+        setTimeout(checkAuthStatus, 500);
+    });
 </script>
 </body>
 </html>
